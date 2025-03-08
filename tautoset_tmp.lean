@@ -257,15 +257,37 @@ example (n : ℕ) (a : Fin n → Finset ℕ)
     #M ≤ 15 - n := by
 
   let B := A \ M
+  let b : Fin n → Finset ℕ := fun i => a i ∩ B
+  let C := Finset.univ.biUnion b
 
-  have : ∀ i, a i ∩ B ≠ ∅ := by
+  have r1 : ∀ i, b i ≠ ∅ := by
     intro i
     specialize h_sub i
     specialize h_nsub i
-    dsimp [B]
+    dsimp [b, B]
     tauto_set
 
+  have r2 : ∀ i j, i ≠ j → b i ∩ b j = ∅ := by
+    intro i j hij
+    specialize h_disj i j hij
+    dsimp [b, B]
+    tauto_set
 
-  sorry
+  have r3 : #(Finset.univ : Finset (Fin n)) ≤ #C := by
+    apply card_le_card_biUnion
+    . intro x hx y hy hxy
+      exact disjoint_iff_inter_eq_empty.mpr (r2 x y hxy)
+    . intro i hi
+      exact nonempty_iff_ne_empty.mpr (r1 i)
+  simp only [Finset.card_univ, Fintype.card_fin] at r3
+  have t0 : #M ≤ #A := by
+    exact card_le_card h_subset
+  have t1 : #C ≤ #B := by
+    exact card_le_card (by tauto_set)
+  have t2 : #B = #A - #M := by
+    exact card_sdiff h_subset
+  have t3 : #A = 15 := by
+    simp only [hA, card_Icc, reduceAdd, Nat.add_one_sub_one]
+  omega
 
 end
